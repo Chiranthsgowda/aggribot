@@ -118,7 +118,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.image(
-        "aggribot/src/prompt.png",
+        "src/prompt.png",
         caption="Get instant answers to your agriculture queries.",
         width=340,  
         use_container_width=True
@@ -126,7 +126,7 @@ with col1:
 
 with col2:
     st.image(
-        "aggribot/src/report.png",
+        "src/report.png",
         caption="Analyze reports and extract key information.",
         width=340, 
         use_container_width=True 
@@ -134,7 +134,7 @@ with col2:
 
 with col3:
     st.image(
-        "aggribot/src/advice.png",
+        "src/advice.png",
         caption="Receive tailored crop advice based on your region.",
         width=340,  
         use_container_width=True
