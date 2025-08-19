@@ -5,3 +5,4 @@ nest_asyncio
 googletrans==4.0.0rc1
 gtts
 python-dotenv
+speechrecognition
