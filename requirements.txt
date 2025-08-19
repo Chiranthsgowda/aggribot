@@ -1,5 +1,5 @@
 streamlit
-genrativeai
+google-generativeai
 PyMuPDF
 nest_asyncio
 googletrans==4.0.0rc1
