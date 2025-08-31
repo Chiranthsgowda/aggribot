@@ -59,6 +59,7 @@ if st.button("Get Crop Advice"):
                 f"You are an agriculture expert. Provide advice for '{crop_name}' in '{soil_type}' soil in '{region}'. "
                 "Include best practices, soil management, and climate considerations. "
                 "Begin with a general suitability rating for the crop in this setup."
+                "Don't mention anything about yourself and just start with answering the query directly"
             )
 
             response = get_gemini_response(crop_prompt)
