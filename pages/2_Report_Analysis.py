@@ -58,7 +58,7 @@ if st.button("Analyze"):
     if uploaded_file is not None:
         # Extract text from PDF
         text = extract_text_from_pdf(uploaded_file)
-        prompt = f"Analyze the following report for {task}:\n\n{text}"
+        prompt = f"Act as a world-class agricultural expert, capable of adapting your role to be a scientist, extension officer, or plant pathologist as needed. Your primary goal is to provide the most helpful, clear, and practical response for a non-expert."Analyze the following report for {task}:\n\n{text}."
         response = get_gemini_response(prompt)
         
         if language_option!= "English":
