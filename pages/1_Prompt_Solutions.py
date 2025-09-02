@@ -71,19 +71,24 @@ language_option = st.selectbox("Select the language for voice input and Response
 if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = ""  
 
-uploaded_audio = st.file_uploader("Upload your voice question (WAV/MP3)", type=["wav", "mp3"])
+import sounddevice as sd
+import numpy as np
 
-if uploaded_audio is not None:
-    with st.spinner("Processing audio..."):
+if st.button("Use Voice Input"):
+    with st.spinner("Listening..."):
+        duration = 5  # seconds
+        sample_rate = 44100
+
+        # Record from microphone
+        recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+        sd.wait()
+
+        # Convert numpy array to AudioData for speech_recognition
+        audio_data = sr.AudioData(recording.tobytes(), sample_rate, 2)
+
         try:
-            # Use AudioFile instead of Microphone
-            audio_file = sr.AudioFile(uploaded_audio)
-            with audio_file as source:
-                recognizer.adjust_for_ambient_noise(source)
-                recorded_audio = recognizer.record(source)
-
-            # Convert to text
-            user_prompt = recognizer.recognize_google(recorded_audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
+            # Speech recognition
+            user_prompt = recognizer.recognize_google(audio_data, language=STT_LANG_CODES.get(language_option, "en-IN"))
             st.success(f"Voice Input Captured: {user_prompt}")
             
         # If the language is not in English, translate it to English
