@@ -97,7 +97,7 @@ if st.button("Use Voice Input"):
 
     except OSError:
         # This block runs if an OSError occurs, meaning no microphone was found
-        st.error("Microphone access is not available in this device. Please use text input.")
+        st.error("Microphone access is not available in this device. Please use text input.Soon alternate will be there")
     
 if st.session_state.user_prompt == "":
     default_value = selected_question
