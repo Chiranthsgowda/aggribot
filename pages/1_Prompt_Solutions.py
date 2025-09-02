@@ -72,27 +72,32 @@ if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = ""  
 
 if st.button("Use Voice Input"):
-    with sr.Microphone() as source:
-        with st.spinner('Listening...'):
-            audio = recognizer.listen(source)  # Capture audio
-        
     try:
-        # Convert voice input to text (default is English)
-        user_prompt = recognizer.recognize_google(audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
-        st.success(f"Voice Input Captured: {user_prompt}")
+        with sr.Microphone() as source:
+            with st.spinner('Listening...'):
+                audio = recognizer.listen(source)  # Capture audio
             
-        # If the language is not in English, translate it to English
-        if language_option != "English":
-            translation = asyncio.run(translate_text(user_prompt))
-            user_prompt = translation  # Update the user prompt with the English translation
-            st.success(f"Translated to English: {user_prompt}")
+        try:
+            # Convert voice input to text (default is English)
+            user_prompt = recognizer.recognize_google(audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
+            st.success(f"Voice Input Captured: {user_prompt}")
+                
+            # If the language is not in English, translate it to English
+            if language_option != "English":
+                translation = asyncio.run(translate_text(user_prompt))
+                user_prompt = translation  # Update the user prompt with the English translation
+                st.success(f"Translated to English: {user_prompt}")
+    
+            st.session_state.user_prompt = user_prompt
+    
+        except sr.UnknownValueError:
+            st.error("Sorry, I could not understand your voice.")
+        except sr.RequestError as e:
+            st.error(f"Error with the voice recognition service: {e}")
 
-        st.session_state.user_prompt = user_prompt
-
-    except sr.UnknownValueError:
-        st.error("Sorry, I could not understand your voice.")
-    except sr.RequestError as e:
-        st.error(f"Error with the voice recognition service: {e}")
+    except OSError:
+        # This block runs if an OSError occurs, meaning no microphone was found
+        st.error("Microphone access is not available in this environment. Please use text input.")
     
 if st.session_state.user_prompt == "":
     default_value = selected_question
