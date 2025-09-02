@@ -50,8 +50,6 @@ st.markdown(
     
     /* Content containers */
     .centered-list {
-        display: flex !important;
-        justify-content: center !important;
         padding: 0.5rem !important;
         margin: 0.5rem auto !important;
         max-width: 95% !important;
@@ -59,10 +57,8 @@ st.markdown(
     }
     
     .centered-list ol {
-        text-align: left !important;
-        padding-left: 1.5rem !important;
+        padding-left: 1rem !important;
         margin: 0 !important;
-        display: inline-block !important;
     }
     
     .centered-list li {
@@ -140,10 +136,6 @@ st.markdown(
             font-size: 1rem !important;
             max-width: 80% !important;
             padding: 1.4rem !important;
-        }
-        
-        .centered-list ol {
-            padding-left: 2rem !important;
         }
         
         .sideh {
