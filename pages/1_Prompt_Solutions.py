@@ -71,28 +71,33 @@ language_option = st.selectbox("Select the language for voice input and Response
 if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = ""  
 
-if st.button("Use Voice Input"):
-    with sr.Microphone() as source:
-        with st.spinner('Listening...'):
-            audio = recognizer.listen(source)  # Capture audio
-        
-    try:
-        # Convert voice input to text (default is English)
-        user_prompt = recognizer.recognize_google(audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
-        st.success(f"Voice Input Captured: {user_prompt}")
+uploaded_audio = st.file_uploader("Upload your voice question (WAV/MP3)", type=["wav", "mp3"])
+
+if uploaded_audio is not None:
+    with st.spinner("Processing audio..."):
+        try:
+            # Use AudioFile instead of Microphone
+            audio_file = sr.AudioFile(uploaded_audio)
+            with audio_file as source:
+                recognizer.adjust_for_ambient_noise(source)
+                recorded_audio = recognizer.record(source)
+
+            # Convert to text
+            user_prompt = recognizer.recognize_google(recorded_audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
+            st.success(f"Voice Input Captured: {user_prompt}")
             
         # If the language is not in English, translate it to English
-        if language_option != "English":
-            translation = asyncio.run(translate_text(user_prompt))
-            user_prompt = translation  # Update the user prompt with the English translation
-            st.success(f"Translated to English: {user_prompt}")
+            if language_option != "English":
+                translation = asyncio.run(translate_text(user_prompt))
+                user_prompt = translation  # Update the user prompt with the English translation
+                st.success(f"Translated to English: {user_prompt}")
 
-        st.session_state.user_prompt = user_prompt
+            st.session_state.user_prompt = user_prompt
 
-    except sr.UnknownValueError:
-        st.error("Sorry, I could not understand your voice.")
-    except sr.RequestError as e:
-        st.error(f"Error with the voice recognition service: {e}")
+        except sr.UnknownValueError:
+            st.error("Sorry, I could not understand your voice.")
+        except sr.RequestError as e:
+            st.error(f"Error with the voice recognition service: {e}")
     
 if st.session_state.user_prompt == "":
     default_value = selected_question
