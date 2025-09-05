@@ -7,4 +7,3 @@ gtts
 python-dotenv
 speechrecognition
 pyaudio
-nest_asyncio
