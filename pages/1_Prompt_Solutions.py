@@ -99,9 +99,16 @@ if st.button("Use Voice Input"):
                 
                 # If the language is not English, translate it to English
                 if language_option != "English":
-                    translation = asyncio.run(translate_text(user_prompt))
-                    user_prompt = translation
-                    st.success(f"Translated to English: {user_prompt}")
+                    with st.spinner("Translating to English..."):
+                        try:
+                            translation = asyncio.run(translate_text(user_prompt))
+                            if translation and translation != user_prompt:
+                                user_prompt = translation
+                                st.success(f"Translated to English: {user_prompt}")
+                            else:
+                                st.warning("Translation may have failed. Using original text.")
+                        except Exception as e:
+                            st.warning(f"Translation failed: {str(e)}. Using original text.")
                 
                 st.session_state.user_prompt = user_prompt
 
@@ -127,8 +134,17 @@ if st.button("Get Response"):
     response = get_gemini_response(prompt)
 
     if language_option != "English":
-        response = asyncio.run(translate_text(response,language_codes[language_option]))
-
+        with st.spinner(f"Translating response to {language_option}..."):
+            try:
+                translated_response = asyncio.run(translate_text(response, language_codes[language_option]))
+                if translated_response and translated_response != response:
+                    response = translated_response
+                    st.success(f"Response translated to {language_option}")
+                else:
+                    st.warning("Response translation may have failed. Showing English response.")
+            except Exception as e:
+                st.warning(f"Response translation failed: {str(e)}. Showing English response.")
+                
     st.subheader("Generated Response:")
     st.write(response)
 
