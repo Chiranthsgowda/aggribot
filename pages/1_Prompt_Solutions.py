@@ -71,51 +71,28 @@ language_option = st.selectbox("Select the language for voice input and Response
 if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = ""  
 
-
 if st.button("Use Voice Input"):
-    audio_bytes = audio_recorder(
-    text="Click to record your prompt",
-    recording_color="#e8b62c",
-    neutral_color="#6aa36f",
-    icon_size="1x"
-    )
-
-    if audio_bytes:
-        st.audio(audio_bytes, format="audio/wav")
+    with sr.Microphone() as source:
+        with st.spinner('Listening...'):
+            audio = recognizer.listen(source)  # Capture audio
         
-        # Process the recorded audio bytes
-        with st.spinner("Transcribing..."):
-            try:
-                # Use a BytesIO object to simulate a file from the bytes
-                from io import BytesIO
-                audio_file = BytesIO(audio_bytes)
-                
-                # Use the recognizer to process the audio file
-                with sr.AudioFile(audio_file) as source:
-                    audio_data = recognizer.record(source)
-                    user_prompt = recognizer.recognize_google(audio_data, language=STT_LANG_CODES.get(language_option, "en-IN"))
-                
-                st.success(f"Voice Input Captured: {user_prompt}")
-                
-                # If the language is not English, translate it to English
-                if language_option != "English":
-                    with st.spinner("Translating to English..."):
-                        try:
-                            translation = asyncio.run(translate_text(user_prompt))
-                            if translation and translation != user_prompt:
-                                user_prompt = translation
-                                st.success(f"Translated to English: {user_prompt}")
-                            else:
-                                st.warning("Translation may have failed. Using original text.")
-                        except Exception as e:
-                            st.warning(f"Translation failed: {str(e)}. Using original text.")
-                
-                st.session_state.user_prompt = user_prompt
+    try:
+        # Convert voice input to text (default is English)
+        user_prompt = recognizer.recognize_google(audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
+        st.success(f"Voice Input Captured: {user_prompt}")
+            
+        # If the language is not in English, translate it to English
+        if language_option != "English":
+            translation = asyncio.run(translate_text(user_prompt))
+            user_prompt = translation  # Update the user prompt with the English translation
+            st.success(f"Translated to English: {user_prompt}")
 
-            except sr.UnknownValueError:
-                st.error("Sorry, I could not understand your voice.")
-            except sr.RequestError as e:
-                st.error(f"Error with the voice recognition service: {e}")
+        st.session_state.user_prompt = user_prompt
+
+    except sr.UnknownValueError:
+        st.error("Sorry, I could not understand your voice.")
+    except sr.RequestError as e:
+        st.error(f"Error with the voice recognition service: {e}")
     
 if st.session_state.user_prompt == "":
     default_value = selected_question
@@ -130,21 +107,12 @@ read = st.checkbox("read out the response")
 
 # Generate response button
 if st.button("Get Response"):
-    prompt = "Act as a world-class agricultural expert, capable of adapting your role to be a scientist, extension officer, or plant pathologist as needed. Your primary goal is to provide the most helpful, clear, and practical response for a non-expert.\n\nFirst, analyze the user's query to determine its type:\n1. Is it a General Information question (e.g., \"What is drip irrigation?\")?\n2. Is it a Procedural \"How-To\" question (e.g., \"How do I make compost?\")?\n3. Is it a Problem-Solving/Diagnostic question (e.g., \"Why are my crops wilting?\")?\n\nBased on your analysis, you must use the corresponding structure below to formulate your answer.\n\n---\n\nStructure for General Information Queries:\n1. Executive Summary: Begin with a 2-3 sentence direct answer.\n2. Detailed Explanation: Break down the topic with clear headings and bullet points. Explain complex terms simply.\n3. Key Takeaways & Practical Applications: Conclude with the most important points and how the information can be used in practice.\n\n---\n\nStructure for Procedural \"How-To\" Queries:\n1. Objective & Prerequisites: State the goal and list all necessary tools, materials, or conditions.\n2. Step-by-Step Guide: Provide clear, numbered steps for the process. Each step should be a single, actionable task.\n3. Tips for Success & Common Pitfalls: Offer expert advice for getting the best results and avoiding common mistakes.\n\n---\n\nStructure for Problem-Solving/Diagnostic Queries:\n1. Most Likely Causes: List the top potential causes, from most to least probable.\n2. Diagnosis & Confirmation: For each cause, explain how to confirm it (e.g., \"Look for X on the underside of the leaf.\").\n3. Actionable Solutions: Provide clear solutions for each cause, separated into (a) Immediate Fixes and (b) Long-Term Prevention.\n\n---\n\nUniversal Rule: Regardless of the query type, your entire response must use simple, easy-to-understand language. Be comprehensive yet concise.\n\nHere is the query: " + user_prompt + "Don't mention anything about yourself and the query just start with answering the query directly"
+    prompt = "You are an expert in agriculture. " +  user_prompt + "keep the response very detailed and informative and clear and concise and in simple words."
     response = get_gemini_response(prompt)
 
     if language_option != "English":
-        with st.spinner(f"Translating response to {language_option}..."):
-            try:
-                translated_response = asyncio.run(translate_text(response, language_codes[language_option]))
-                if translated_response and translated_response != response:
-                    response = translated_response
-                    st.success(f"Response translated to {language_option}")
-                else:
-                    st.warning("Response translation may have failed. Showing English response.")
-            except Exception as e:
-                st.warning(f"Response translation failed: {str(e)}. Showing English response.")
-                
+        response = asyncio.run(translate_text(response,language_codes[language_option]))
+
     st.subheader("Generated Response:")
     st.write(response)
 
