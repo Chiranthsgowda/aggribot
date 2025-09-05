@@ -4,6 +4,7 @@ from src.translate_utils import translate_text
 from src.gemini_api import get_gemini_response
 from src.tts_utils import text_to_speech_bytes
 import asyncio
+from audio_recorder_streamlit import audio_recorder
 
 # Initialize the speech recognizer
 recognizer = sr.Recognizer()
