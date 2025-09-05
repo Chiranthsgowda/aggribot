@@ -38,7 +38,7 @@ suggested_questions = [
 
 selected_question = st.selectbox("Suggested Questions", [""] + suggested_questions)
 
-    
+
 language_codes = {
     "English": "en",
     "Kannada": "kn",
@@ -72,28 +72,33 @@ if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = ""  
 
 if st.button("Use Voice Input"):
-    with sr.Microphone() as source:
-        with st.spinner('Listening...'):
-            audio = recognizer.listen(source)  # Capture audio
-        
     try:
-        # Convert voice input to text (default is English)
-        user_prompt = recognizer.recognize_google(audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
-        st.success(f"Voice Input Captured: {user_prompt}")
-            
-        # If the language is not in English, translate it to English
-        if language_option != "English":
-            translation = asyncio.run(translate_text(user_prompt))
-            user_prompt = translation  # Update the user prompt with the English translation
-            st.success(f"Translated to English: {user_prompt}")
+        with sr.Microphone() as source:
+            with st.spinner('Listening...'):
+                audio = recognizer.listen(source)  # Capture audio
 
-        st.session_state.user_prompt = user_prompt
+        try:
+            # Convert voice input to text (default is English)
+            user_prompt = recognizer.recognize_google(audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
+            st.success(f"Voice Input Captured: {user_prompt}")
 
-    except sr.UnknownValueError:
-        st.error("Sorry, I could not understand your voice.")
-    except sr.RequestError as e:
-        st.error(f"Error with the voice recognition service: {e}")
-    
+            # If the language is not in English, translate it to English
+            if language_option != "English":
+                translation = asyncio.run(translate_text(user_prompt))
+                user_prompt = translation  # Update the user prompt with the English translation
+                st.success(f"Translated to English: {user_prompt}")
+
+            st.session_state.user_prompt = user_prompt
+
+        except sr.UnknownValueError:
+            st.error("Sorry, I could not understand your voice.")
+        except sr.RequestError as e:
+            st.error(f"Error with the voice recognition service: {e}")
+
+    except OSError:
+        # This block runs if an OSError occurs, meaning no microphone was found
+        st.error("Microphone access is not available in this device. Please use text input.Soon alternate will be there")
+
 if st.session_state.user_prompt == "":
     default_value = selected_question
 
@@ -107,7 +112,7 @@ read = st.checkbox("read out the response")
 
 # Generate response button
 if st.button("Get Response"):
-    prompt = "You are an expert in agriculture. " +  user_prompt + "keep the response very detailed and informative and clear and concise and in simple words."
+    prompt = "Act as a world-class agricultural expert, capable of adapting your role to be a scientist, extension officer, or plant pathologist as needed. Your primary goal is to provide the most helpful, clear, and practical response for a non-expert.\n\nFirst, analyze the user's query to determine its type:\n1. Is it a General Information question (e.g., \"What is drip irrigation?\")?\n2. Is it a Procedural \"How-To\" question (e.g., \"How do I make compost?\")?\n3. Is it a Problem-Solving/Diagnostic question (e.g., \"Why are my crops wilting?\")?\n\nBased on your analysis, you must use the corresponding structure below to formulate your answer.\n\n---\n\nStructure for General Information Queries:\n1. Executive Summary: Begin with a 2-3 sentence direct answer.\n2. Detailed Explanation: Break down the topic with clear headings and bullet points. Explain complex terms simply.\n3. Key Takeaways & Practical Applications: Conclude with the most important points and how the information can be used in practice.\n\n---\n\nStructure for Procedural \"How-To\" Queries:\n1. Objective & Prerequisites: State the goal and list all necessary tools, materials, or conditions.\n2. Step-by-Step Guide: Provide clear, numbered steps for the process. Each step should be a single, actionable task.\n3. Tips for Success & Common Pitfalls: Offer expert advice for getting the best results and avoiding common mistakes.\n\n---\n\nStructure for Problem-Solving/Diagnostic Queries:\n1. Most Likely Causes: List the top potential causes, from most to least probable.\n2. Diagnosis & Confirmation: For each cause, explain how to confirm it (e.g., \"Look for X on the underside of the leaf.\").\n3. Actionable Solutions: Provide clear solutions for each cause, separated into (a) Immediate Fixes and (b) Long-Term Prevention.\n\n---\n\nUniversal Rule: Regardless of the query type, your entire response must use simple, easy-to-understand language. Be comprehensive yet concise.\n\nHere is the query: " + user_prompt + "Don't mention anything about yourself and the query just start with answering the query directly"
     response = get_gemini_response(prompt)
 
     if language_option != "English":
@@ -122,16 +127,16 @@ if st.button("Get Response"):
         try:
             # Store the returned bytes directly in a clearly named variable.
             audio_bytes = text_to_speech_bytes(response, lang=language_codes[language_option])
-                
+
             # 3. Pass these bytes DIRECTLY to st.audio. No need to open a file.
             st.audio(audio_bytes, format="audio/mp3")
-                
+
             st.success(f"Speech generated in {language_option}!")
             st.write("Thank you for your patience.🥰")
 
         except Exception as e:
             st.error(f"An error occurred while generating speech: {e}")
-        
+
     if response != "":
         st.session_state.user_prompt = ""
         selected_question = ""
