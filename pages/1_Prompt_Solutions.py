@@ -71,33 +71,36 @@ language_option = st.selectbox("Select the language for voice input and Response
 if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = ""  
 
-if st.button("Use Voice Input"):
-    try:
-        with sr.Microphone() as source:
-            with st.spinner('Listening...'):
-                audio = recognizer.listen(source)  # Capture audio
+audio_bytes = audio_recorder(
+    text="Click to record your prompt",
+    recording_color="#e8b62c",
+    neutral_color="#6aa36f",
+    icon_size="1x"
+    )
 
-        try:
-            # Convert voice input to text (default is English)
-            user_prompt = recognizer.recognize_google(audio, language=STT_LANG_CODES.get(language_option, "en-IN"))
-            st.success(f"Voice Input Captured: {user_prompt}")
+if audio_bytes:
+        st.audio(audio_bytes, format="audio/wav")
+        
+        # Process the recorded audio bytes
+        with st.spinner("Transcribing..."):
+            try:
+                # Use a BytesIO object to simulate a file from the bytes
+                from io import BytesIO
+                audio_file = BytesIO(audio_bytes)
+                
+                # Use the recognizer to process the audio file
+                with sr.AudioFile(audio_file) as source:
+                    audio_data = recognizer.record(source)
+                    user_prompt = recognizer.recognize_google(audio_data, language=STT_LANG_CODES.get(language_option, "en-IN"))
+                
+                st.success(f"Voice Input Captured: {user_prompt}")        
+                
+                st.session_state.user_prompt = user_prompt
 
-            # If the language is not in English, translate it to English
-            if language_option != "English":
-                translation = asyncio.run(translate_text(user_prompt))
-                user_prompt = translation  # Update the user prompt with the English translation
-                st.success(f"Translated to English: {user_prompt}")
-
-            st.session_state.user_prompt = user_prompt
-
-        except sr.UnknownValueError:
-            st.error("Sorry, I could not understand your voice.")
-        except sr.RequestError as e:
-            st.error(f"Error with the voice recognition service: {e}")
-
-    except OSError:
-        # This block runs if an OSError occurs, meaning no microphone was found
-        st.error("Microphone access is not available in this device. Please use text input.Soon alternate will be there")
+            except sr.UnknownValueError:
+                st.error("Sorry, I could not understand your voice.")
+            except sr.RequestError as e:
+                st.error(f"Error with the voice recognition service: {e}")
 
 if st.session_state.user_prompt == "":
     default_value = selected_question
